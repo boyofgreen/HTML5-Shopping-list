@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="js"/>
+	<classpathentry kind="src" path="zepto-0.8/dist"/>
+	<classpathentry kind="src" path="zepto-0.8/src"/>
+	<classpathentry excluding="fixtures/" kind="src" path="zepto-0.8/test"/>
+	<classpathentry kind="src" path="zepto-0.8/test/fixtures"/>
+	<classpathentry kind="src" path="zepto-0.8/vendor"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

@@ -1,0 +1,715 @@
+	<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Zepto gesture functional test</title>
+  <meta name="viewport" content="maximum-scale=1,initial-scale=1,user-scalable=0">
+  <script src="zepto-0.8/src/zepto.js"></script>
+  <script src="zepto-0.8/src/event.js"></script>
+  <script src="zepto-0.8/src/touch.js"></script>  
+  <script src="js/underscore-min.js"></script>
+  <script src="js/backbone-min.js"></script>
+  <script src="js/handlebars-1.0.0.beta.4.js"></script>
+
+  <link type="text/css" rel="stylesheet" href="css/cssreset-min.css" /> 
+  <link type="text/css" rel="stylesheet" href="css/shoppingMain.css" />
+</head>
+<body>
+<button class="switch-button">lists</button>
+<div class="bodyWrapper">
+	<div class="topDrawer">
+		<div id="parentList"></div>	
+		<div id="controls" class="parentList-controls">
+			<div class="parentList-controls-wrapper">
+			<div class="parentList-cotrols-input"><input class="parentList-controls-input-input" placeholder="add a new list" type="text" /><button id="test"  class="parentList-controls-button">add</button></div>
+			
+			<div class="parentList-controls-button-import"><button  class="parentList-controls-button-import-button">import a new list</button></div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="mainList-wrapper">
+		<div id="mainList" class="page-curl"></div>
+		
+	</div>
+</div>
+
+
+
+
+
+
+<div class="importWindow">
+	<div class=" shim-modal"></div>
+	<div class="importWindow-liner">
+	<div class=" shim-content">
+
+	<div class="shim-selection-list">
+		<div class="shim-selection-list-liner">
+			<h3 class="importWindow-text">Import your text into a list</h3>
+			<p class="importWindow-info">copy and past text from another source into the below window.  Each list item should be seperated by either comas or line breaks.</p>
+			<div class="importWindow-name"><label class="importWindow-name-name">enter list name</label><input class="importWindow-name-input" /></div>
+			<div class="importWindow-textbox">
+				
+				<textarea class="importWindow-textbox-box"></textarea>
+				
+			</div>
+			
+			<div class="importWindow-buttons">
+				<button class="importWindow-buttons-import">import</button>
+				<button class="importWindow-buttons-close">close</button>
+			</div>
+		</div>
+	</div>
+	</div>
+	</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<script type="text/template" id="paretListTemplete">
+	
+<div class="parentList-src">
+	<div class="parentList-src-wrapper">
+	<h1 class="parentList-header">Choose your list:</h1>
+		<div class="parentList-body-wrapper">
+		<ul class="parentList-body-list">
+		{{#each items}}
+		<li class="parentList-body-item" data-cid="{{cid}}">
+				<div class="parentList-item-title">{{attributes.listName}}</div>
+				
+				<div class="parentList-item-delete"><div class="parentList-item-delete-box item-delete-box">delete</div></div>
+		</li>	
+		{{/each}}	
+		</ul>	
+			
+		</div>
+	</div>
+</div>	
+	
+	
+	
+	
+	
+	
+</script>
+
+<script type="text/template" id="mainListTemplate">
+<div class="list-src">
+	<div class="list-src-wrapper">
+		<div class="list-header-wrapper"><h2 class="list-header-name">{{listName}}</h2><div class="title-item-edit"><input class="title-item-edit-input" /></div></div>
+		<div  class="list-body-wrapper">
+
+		<ul class="list-body-list">
+		{{#each items}}
+		<li class="list-body-item {{attributes.checked}}" data-cid="{{cid}}" data-selectState="{{attributes.checked}}">
+				<div class="list-item-title-wrapper"><input class="list-item-title" value="{{attributes.itemName}}" /></div>
+				<div class="list-item-edit"><input class="list-item-edit-input" /></div>
+				<div class="list-item-selection"><div class="list-item-selection-box"></div></div>
+				<div class="list-item-delete"><div class="list-item-delete-box item-delete-box">delete</div></div>
+		</li>	
+		{{/each}}	
+		</ul>
+
+		<div id="controls" class="controls">
+			<div class="controls-wrapper">
+			<div class="cotrols-input"><input class="controls-input-input" type="text" /></div>
+			<div class="controls-button"><button id="test"  class="controls-button-button">add to list</button></div>
+
+			</div>
+		</div>	
+		</div>	
+		
+	</div>
+	
+	
+</div>	
+	
+	
+</script>
+
+
+
+
+
+<script>
+	//determin touch or not
+	var hasTouch = function(){ return "ontouchstart" in window;}();
+	
+	var currentList = 0;
+//	var testObject = [{listName:"test 1", listID:"1", listItems:[{itemName:"test item 1", checked: true},{itemName:"test item 2", checked: true}]},
+//					{listName:"test 2", listID:"2", listItems:[{itemName:"test item 3", checked: true},{itemName:"test item 4", checked: true}]}];	
+
+//the real ref object
+
+	var localRefObj = JSON.parse(localStorage.getItem('lmsShoppingList')) ||'[]';	
+	var listGroupModel = Backbone.Model.extend({
+		defaults: {
+		"listName":"new list",
+		//"listItems":"[]"
+		}
+	});
+	
+	
+	
+	
+//collection
+	
+	var listGroupCollectionSet = Backbone.Collection.extend({
+	  model: listGroupModel
+	});	
+	
+	
+	//this is the parent collection
+	var listGroupCollection = new listGroupCollectionSet(localRefObj); 
+	
+//	console.log(listGroupCollection);
+	
+	
+//bind the change made to the list items by the child view	
+	listGroupCollection.bind('all', function(){
+		
+	//	console.log('this should be called when we update');
+		//console.log( JSON.stringify(listGroupCollection));
+		localStorage.setItem('lmsShoppingList',  JSON.stringify(listGroupCollection));
+		
+		})
+	
+
+
+
+
+
+
+
+
+
+//view
+
+var ListGroupView = Backbone.View.extend({    
+	 el: parentList,
+	 
+	 collection: listGroupCollection,
+	 
+	 
+	 initialize: function(){
+		     _.bindAll(this, 'render', 'addToList', 'addEvents','buildObject'); //anything that you want to maintain access to the this but be in the bind
+		     
+			   
+		       this.collection.bind('remove', this.render);
+			   this.collection.bind('add', this.render);
+		       this.render(); // not all views are self-rendering. This one is.
+				this.addDrawerListener();
+				this.addEvents();
+    },
+	
+	
+
+	
+	addEvents: function(){
+		var that = this;
+		
+				$('.topDrawer').delegate('.parentList-body-item', hasTouch?'swipeLeft':'mouseup', function(e){
+						//console.log('in the delete listener')	
+						var myNode = $(this);
+						
+						if(myNode.hasClass('showDelete')  == false){
+							myNode.addClass('showDelete');
+						
+							}
+			
+			
+			});	
+		
+				$('.topDrawer').delegate('.parentList-item-delete-box', hasTouch?'tap':'mousedown', function(e){
+						console.log('in the delete listener')	
+			
+			
+					var targID = e.target.parentNode.parentNode.getAttribute('data-cid');
+					console.log(targID);
+									//	console.log(targID);
+									//	console.log(that.collection.getByCid(targID))
+										that.collection.remove(targID);
+									//	that.saveIt();
+										
+										that.render();
+										
+									//	console.log(that.collection.at(0).attributes.listItems)
+										//myList.collection.reset(that.collection.at(0).attributes.listItems);
+										//work with current cid to make sure it gets set to auto switch list
+										//myList.render();
+			
+			});			
+		
+		
+		
+		$('.parentList-controls-button-import-button').on(hasTouch?'touchstart':'click', function(e){
+			console.log('ruiing import');
+			$('.importWindow').toggleClass('showIt');
+		});
+		
+		$('.importWindow-buttons-close').on(hasTouch?'touchstart':'click', function(e){
+			console.log('ruiing import');
+			$('.importWindow').toggleClass('showIt');
+		});	
+		
+		$('.importWindow-buttons-import').on(hasTouch?'touchstart':'click', function(e){
+			console.log('test me again')
+			that.buildObject($('.importWindow-textbox-box').val(),$('.importWindow-name-input').val() );
+			$('.importWindow').toggleClass('showIt');
+		})	;		
+		
+		
+		
+	},
+	
+	buildObject: function(string, nameOfList){
+		
+				console.log($('.importWindow-textbox-box').val());
+			var updatedText = string.replace(',','\n');
+			console.log(updatedText.split("\n"));	
+			
+			
+	var newArray = [];
+	
+		$(updatedText.split("\n")).each(function(){console.log(this);
+		newArray.push({itemName: this});
+		})	
+	console.log(JSON.stringify(newArray));	
+	var newObj = {'listName': nameOfList, 'listItems':JSON.parse(JSON.stringify(newArray)) };		
+		console.log(newObj);	
+		
+		
+		this.collection.add(newObj);
+		
+		
+	},
+	render: function(){
+	var source   = $("#paretListTemplete").html();
+	var myTemplate = Handlebars.compile(source);
+	$(this.el).html(myTemplate({items:this.collection.models}));
+	
+	
+	  },
+	  
+	  	 //should call whatever is the current model to update 
+	  addToList: function(inputObject){
+		
+		this.collection.add({listName:inputObject.inputValue});
+		
+		//this.saveIt()
+	  },
+	  
+	  addDrawerListener: function(){
+	  	//console.log('test open')
+	  	var topDrawer = $('.switch-button');
+		//console.log($('.switch-button'));
+		topDrawer.bind(hasTouch?'tap':'click', function(){
+			//console.log('open drawer');
+			var drawer = $('.bodyWrapper');
+			if(drawer.hasClass('open')==false){
+				
+				drawer.addClass('open');
+				topDrawer.html('return');
+				}else {
+					 drawer.removeClass('open');
+					 topDrawer.html('lists');
+					 }
+			
+			
+		}, true)
+		
+		
+	  }
+	  
+	 });
+		
+
+	var myGroupList = new ListGroupView();
+
+
+
+
+
+//event listeners for parent lists
+
+	//add listener to group enter input
+	$('.parentList-controls-button').bind(hasTouch?'touchstart':'click', function(event){ 
+	
+	console.log('button works');	
+	
+			myGroupList.addToList({inputValue:$('.parentList-controls-input-input').attr('value')});
+			
+			//reset the input
+			$('.parentList-controls-input-input').val('');
+		});
+
+
+
+$('#parentList').delegate('li', hasTouch?'tap':'click', function(e){
+	
+	// console.log(e.currentTarget.getAttribute('data-cid'));
+	 currentCID = e.currentTarget.getAttribute('data-cid');
+	 
+	myList.collection.reset(listGroupCollection.getByCid(currentCID).attributes.listItems);
+	myList.render();
+	
+	
+//		var drawer = $('.bodyWrapper');
+//			if(drawer.hasClass('open')==false){
+//				
+//				drawer.addClass('open')
+//				}else { drawer.removeClass('open');}
+			
+	 $('.bodyWrapper').toggleClass('open');
+	 $('.switch-button').html('change lists');
+	 });
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+</script>
+
+<script>
+
+		
+	var tapClick = hasTouch?'tap':'click';	
+
+	//values
+	
+	
+	var currentList = 0;
+	
+
+	
+	var currentCID = listGroupCollection.at(0).cid;
+//	var testObject = [{listName:"test 1", listID:"1", listItems:[{itemName:"test item 1", checked: true},{itemName:"test item 2", checked: true}]},
+	//				{listName:"test 2", listID:"2", listItems:[{itemName:"test item 3", checked: true},{itemName:"test item 4", checked: true}]}];
+
+	//model
+	var listItemsModel = Backbone.Model.extend({
+	  defaults: {
+    "itemName":  "new Item",
+	"checked": "false",
+	"quantity": "1"
+
+  }
+	  
+	});
+	
+		
+		
+	//collection
+	
+	var listItemCollectionSet = Backbone.Collection.extend({
+	  model: listItemsModel
+	});
+	
+	
+	
+
+	var localStoare = JSON.parse(localStorage.getItem('lmsShoppingList'));
+
+	var listItemCollection = new listItemCollectionSet(listGroupCollection.getByCid(currentCID).attributes.listItems); 
+	
+	//var listItemCollection = new listItemCollectionSet([{itemName:"test item 1", checked: true},{itemName:"test item 2", checked: true}]); 
+	
+	//view
+	
+	 var ListView = Backbone.View.extend({    
+	 el: mainList,
+	 parentCollection: listGroupCollection,
+	 events:{
+	// "touchstart .controls-button-button": "addButton",
+	// "click .controls-button-button": "addButton",
+	// "tap .list-item-delete-box": "deleteButton", 
+	// "click .list-item-delete-box": "deleteButton", 
+	 "click .list-header-name": "titleEdit", 
+
+
+	 "tap .list-header-name": "titleEdit", 
+	 
+	 
+	// "blur .list-item-edit-input": "blurEvent" //blur doesn't seeem to work
+		
+		
+	 },
+	 
+	 collection: listItemCollection,
+	 
+	 initialize: function(){
+		     _.bindAll(this, 'render', 'saveIt','addToList','attachEvents', 'blurEvent','deleteButton', 'titleEdit','titleBlurEvent','addButton','deleteButton'); //anything that you want to maintain access to the this but be in the bind
+		     
+			   
+		       this.collection.bind('add', this.render);
+			   this.collection.bind('remove', this.render);
+			   this.collection.bind('change', this.saveIt);
+			   this.collection.bind('add', this.saveIt);
+			   this.collection.bind('remove', this.saveIt);
+			  // this.collection.bind('remove', this.saveIt);			   
+			   
+		   //    this.render(); // not all views are self-rendering. This one is.
+		  this.render();
+		  this.attachEvents();
+
+    },
+	
+	
+	saveIt: function(){
+		//lets first update the portion of our local object
+		//testObject[currentList].listItems = this.collection.toJSON();
+		//console.log('saveIt');
+		//console.log(this.collection.toJSON());
+		listGroupCollection.getByCid(currentCID).set({listItems:this.collection.toJSON()});
+		//	localStorage.setItem('lmsShoppingList',  JSON.stringify(testObject[currentList].listItems));
+			//localStorage.setItem('lmsDiscountCalcTaxRate',  baseTax);
+			//localStorage.setItem('lmsDiscountCalcDiscRate',  baseDisc);
+
+	},
+	
+	blurEvent: function(e){
+		var thisValue = e.target.value;
+		//if($(e.target.parentNode.parentNode).hasClass('editText')==true){
+		///console.log($(e.target.parentNode.parentNode).attr('data-cid'));
+		//record changes
+		this.collection.getByCid($(e.target.parentNode.parentNode).attr('data-cid')).set({itemName:thisValue})
+		//update parent value
+		//$(e.target.parentNode.parentNode).children('.list-item-title').html(thisValue);
+		//hide the input
+		//$(e.target.parentNode.parentNode).toggleClass('editText');
+	//	console.log('bluring');
+	//	}
+		
+		
+	},
+	
+	
+	titleBlurEvent:function(e){
+		var thisValue = e.target.value;
+		//console.log(listGroupCollection.getByCid(currentCID).attributes.listName);
+		//console.log(e.target.value)
+		listGroupCollection.getByCid(currentCID).set({listName: e.target.value})
+		$(e.target.parentNode.parentNode).children('.list-header-name').html(thisValue);
+		$(e.target.parentNode.parentNode).toggleClass('editText');
+	},
+	
+	
+	
+	
+	
+	attachEvents: function(){
+		
+	var that = this;	
+	
+	
+	//attach it for deligates for selects
+	
+	$('#mainList').delegate('.controls-button-button', hasTouch?'touchstart':'mousedown', that.addButton);
+	$('#mainList').delegate('.list-item-delete-box', hasTouch?'touchstart':'mousedown', that.deleteButton);
+	
+	//add functionality for select and deselect
+			$('#mainList').delegate('.list-item-selection', hasTouch?'touchstart':'mousedown', function(e){
+
+				var myNode = e.target.parentNode.parentNode;
+					
+				 var newVal = (myNode.getAttribute('data-selectState') == 'false')?'true':'false';
+				 $(myNode).toggleClass('true');
+				that.collection.getByCid(e.target.parentNode.parentNode.getAttribute('data-cid')).set({checked: newVal});
+
+	 
+	 });
+	 
+	 //add functionality for edit
+	 
+//		$('#mainList').delegate('.list-item-title', hasTouch?'tap':'mousedown', function(e){	 
+//	 			$(e.target.parentNode).addClass('editText');
+//		//console.log($('.editText .list-item-edit-input').focus());
+//		//var input = $('.editText .list-item-edit-input');
+//		//input.focus();
+//		$(e.target.parentNode).children('.list-item-edit').children('.list-item-edit-input').val(this.innerHTML);
+//				
+//	 
+//	 });
+
+
+	 	 
+	 //add functionality for delete
+
+
+			$('#mainList').delegate('.list-body-item', hasTouch?'swipeLeft':'mouseup', function(e){
+					console.log('swiping')
+					console.log(e.target)
+				var myNode = $(this);
+				
+				if(myNode.hasClass('showDelete')  == false){
+					myNode.addClass('showDelete');
+		
+					}
+
+	 
+	 });	 
+	 
+			$('#mainList').delegate('.list-body-item', hasTouch?'tap':'mouseup', function(e){
+					console.log('swipingwwwwwwwwwww')
+				var myNode = $(this);		
+					
+			
+				
+				if(myNode.hasClass('showDelete')  == true){
+
+					//myNode.removeClass('showDelete');	
+					}
+
+	 
+	 });	 
+
+
+	$('#mainList').delegate('.list-item-title', 'keypress', function(e){
+
+	if(e.charCode == '13'){
+		
+		this.blur();
+	}
+
+	});
+
+	$('#mainList').delegate('.controls-input-input', 'keypress', function(e){
+
+	if(e.charCode == '13'){
+		
+		that.addButton();
+		console.log(this)
+	}
+
+	});
+
+
+
+
+
+
+
+//events for delete button
+
+//			$('#mainList').delegate('.list-item-delete-box', hasTouch?'tap':'click', function(e){
+//
+//			var targID = e.target.parentNode.parentNode.getAttribute('data-cid');
+//			console.log(targID);
+//			console.log(that.collection.getByCid(targID))
+//			that.collection.remove(targID);
+//			that.saveIt();
+//			that.render();
+//			
+//	 
+//	 });		 
+	 
+	 
+	},
+	
+	
+	render: function(){
+	var source   = $("#mainListTemplate").html();
+	var myTemplate = Handlebars.compile(source);
+	//console.log(this.el);
+
+	$(this.el).html(myTemplate({listName:listGroupCollection.getByCid(currentCID).attributes.listName,items:this.collection.models}));
+	
+	$('.list-item-title').bind('blur', this.blurEvent);
+	
+	$('.title-item-edit-input').bind('blur', this.titleBlurEvent);
+	
+	
+	
+	  },
+	 
+	 
+	 deleteButton: function(e){
+	 		var that = this;
+		
+					var targID = e.target.parentNode.parentNode.getAttribute('data-cid');
+				//	console.log('test jeff')
+			//console.log(targID);
+		//	console.log(that.collection.getByCid(targID))
+			that.collection.remove(targID);
+			that.saveIt();
+			that.render();
+			
+			
+			
+	 },
+	 
+	 titleEdit: function(e){
+	 	
+		$(e.target.parentNode).addClass('editText');
+		//console.log($('.editText .list-item-edit-input').focus());
+		//var input = $('.editText .list-item-edit-input');
+		//input.focus();
+		$(e.target.parentNode).children('.title-item-edit').children('.title-item-edit-input').val(e.target.innerHTML);
+		
+		
+		
+	 },
+	 
+	 
+	 //should call whatever is the current model to update 
+	 addToList: function(inputObject){
+		
+		this.collection.add({itemName:inputObject.inputValue});
+		
+		this.saveIt();
+
+	  },
+	  
+	  	//this is the events for the entry field , right now seperate view, but may want to include as part of the list view
+	
+
+
+	//$('.controls-button-button').bind(hasTouch?'touchstart':'mousedown', function(event){ 
+	
+	//console.log();	
+	addButton: function(){
+			this.addToList({inputValue:$('.controls-input-input').attr('value')});
+			console.log('@@@@@@@@@@@@@fire once')
+			//reset the input
+			//$('.controls-input-input').attr('value', ' ww'); // not working when populated
+			$('.controls-input-input').val('');
+			$('.controls-input-input').focus();
+		//});
+		
+		
+	}	
+	  
+	  
+	 });
+		
+
+	var myList = new ListView();
+	
+	
+
+	
+	
+	
+
+</script>	
+</body>
+
+</html>
+
