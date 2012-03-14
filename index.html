@@ -564,7 +564,11 @@ $('#parentList').delegate('li', hasTouch?'tap':'click', function(e){
 					}
 
 	 
-	 });	 
+	 });
+     
+
+     
+     
 	 
 			$('#mainList').delegate('.list-body-item', hasTouch?'tap':'mouseup', function(e){
 					console.log('swipingwwwwwwwwwww')
@@ -703,6 +707,23 @@ $('#parentList').delegate('li', hasTouch?'tap':'click', function(e){
 	var myList = new ListView();
 	
 	
+//this is outside the render becase it is for any of the lists
+
+     //add a window event that can take away any delete classes that may be in the dom, this mgiht be heavy, but don't know how else to do it
+     
+          $(window).bind('touchmove', function(e){
+              $('.showDelete').toggleClass('showDelete');
+              
+              
+              });
+              
+//things still TODO:
+//  fix list name change not working
+//fix import window from moving around
+//update buttons in import window
+//update input boxes on list and on add new screen
+//should not fire list when you delete list
+// maybe dress up the backgroup image a little
 
 	
 	
